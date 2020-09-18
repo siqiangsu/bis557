@@ -1,0 +1,24 @@
+Package: bis557
+Title: BIS557 Homework Package
+Version: 0.0.0.1000
+Authors@R: 
+    person(given = "Siqiang",
+           family = "SU",
+           role = c("aut", "cre"),
+           email = "first.last@example.com",
+           comment = c(ORCID = "YOUR-ORCID-ID"))
+Description: This package serves as the homework of course BIS557
+License: LGPL (>= 2.1)
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1
+Depends: 
+    R (>= 2.10)
+Suggests: 
+    testthat,
+    covr,
+    knitr,
+    rmarkdown,
+    DT
+VignetteBuilder: knitr
