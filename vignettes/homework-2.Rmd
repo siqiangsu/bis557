@@ -1,0 +1,149 @@
+---
+title: "homework-2"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{homework-2}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+1. CASL 2.11 Problem 5: Consider the simple regression model with only a scalar x and intercept: 
+$$
+y=\beta_0+\beta_1x
+$$
+
+Using the explicit formula for the inverse of a 2-by-2 matrix, write down
+the least squares estimators for $\hat{\beta_0}$ and $\hat{\beta_1}$.
+
+We assume that We have n pairs of observations ($x_i$,$y_i$), then our design matrix is:
+$$
+\begin{bmatrix}
+1 & x_1 \\
+1 & x_2 \\
+.& . \\
+1 & x_n\\
+\end{bmatrix}
+$$
+Then we know:
+$$
+X^TX=\begin{bmatrix}
+n & \Sigma x_i \\
+\Sigma x_i  & \Sigma x_i^2 \\
+\end{bmatrix}
+$$
+By the formula of 2x2 matrix inverse:
+$$
+(X^TX)^{-1}=\frac{1}{n\Sigma x_i^2-(\Sigma x_i)^2}\begin{bmatrix}
+\Sigma x_i^2 & -\Sigma x_i \\
+-\Sigma x_i  &  n\\
+\end{bmatrix}
+$$
+Then we have:
+$$
+\beta = (X^TX)^{-1}X^TY=\frac{1}{n\Sigma x_i^2-(\Sigma x_i)^2}\begin{bmatrix}
+y_1(\Sigma x_i^2-nx_1\bar{X})+y_2(\Sigma x_i^2-nx_2\bar{X})+...+ y_n(\Sigma x_i^2-nx_n\bar{X}) \\
+n(x_1y_1+...+x_ny_n)-n\bar{X}(y_1+...+y_n) \\
+\end{bmatrix}
+$$
+By simplyfing the vector elements, we have:
+$$
+\hat{\beta_0}=\frac{\Sigma y_i\Sigma x_i^2-n\bar{X}\Sigma y_i}{n\Sigma x_i^2-(\Sigma x_i)^2}
+$$
+$$
+\hat{\beta_1}=\frac{n\Sigma x_i y_i-\Sigma x_i\Sigma y_i}{n\Sigma x_i^2-(\Sigma x_i)^2}
+$$
+2. Here we implement OLS with gradient descent but compute out-of-sample prediction errors. We first randomize our data an divide our data into 80% training and 20% testing data. Then we fit OLS using training data and measure the prediction error using testing data. The corresponding function is `my_lm_gd_out_of_sample()`:
+```{r}
+bis557::my_lm_gd_out_of_sample(Sepal.Length~.,iris,eta=0.05,iters=100000,seed=1234)
+```
+If we use the whole dataset to train the $\beta$ and get the in-sample prediction error, we have:
+```{r}
+betahat <- bis557::my_gd(Sepal.Length~.,iris)
+form <- Sepal.Length~.
+d1 <- model.frame(form,iris)
+X <- model.matrix(form,d1,contrasts.arg = contrasts)
+y_name <- as.character(form)[2]
+Y <- matrix(d1[,y_name],ncol=1)
+Yhat <- X %*% betahat
+mean((Y-Yhat)^2)
+```
+We can see that in-sample prediction error is smaller than the out-of-sample prediction error. This make sense.
+
+3. Now we show that ridge regression function `my_ridge()` works both on the iris regression dataset with colinear variables and without colinear variables. We compare our function with the golden standard `lm()`.
+
+
+(1)When $\lambda=0$, the solution of `my_ridge()` and `lm()` should be same:
+```{r}
+library(bis557)
+bis557::my_ridge(Sepal.Length~.,iris[-5],lambda=0,tol=1e-8)
+lm(Sepal.Length~.,iris[-5])$coefficients
+```
+We can see that there are exactly the same.
+
+
+(2)When $\lambda$ is increasing, we expect that all the coefficients should shirnk towards 0:
+```{r}
+lambda1 <- 10^(c(-3:6))
+for(i in 1:length(lambda1)){
+  res <- bis557::my_ridge(Sepal.Length~.,iris[-5],lambda=lambda1[i],tol=1e-8)
+  print(res$coefficients)
+}
+```
+
+We can see that all coefficients are shrinked towards 0 as $\lambda$ increases from $10^{-3}$ to $10^{6}$.
+
+(3)We add colinear variable into the dataset and check whether `my_ridge()` can run:
+```{r}
+iris_new <- cbind(iris[,-5],0.1*iris$Petal.Width)
+bis557::my_ridge(Sepal.Length~.,iris_new,lambda=0,tol=1e-8)
+lm(Sepal.Length~.,iris_new)$coefficients
+
+```
+We can see the coefficients are quite close to `lm()`.
+
+4. We implement cross validation to select the optimal $\lambda$ for ridge regression. I create a function called 
+`cv_ridge()` which will implement 10-fold cross validation and find the optimal $\lambda$ minimizing the mean out-of-sample prediction errors. I also create a generic function `predict.my_ridge()` to dispatch the `predict()` to my object class. We can see the plot of out-of-sample error vs. $\lambda$.
+```{r}
+bis557::cv_ridge(Sepal.Length ~ .,iris,lambdas = seq(0,0.1,by=0.001),seed = 13)
+```
+
+5. We have the LASSO penalty:
+$$
+\frac{1}{2n} ||Y - X \beta||_2^2 + \lambda ||\beta||_1.
+$$
+Without of loss of generality, we can assume $X$ is orthogonal designed (If not, we can transform X into orthogonal design by Gram-Schmidt process), then we can have $X^TX=I$.
+$$
+\begin{aligned}
+\frac{1}{2n}\|Y-X \beta\|_{2}^{2}+\lambda\|\beta\|_{1} &=\frac{1}{2n}(Y^{T} Y+\beta^{T} X^{T} X \beta-2 X^TY \beta)+\lambda\|\beta\|_{1} \\
+&=\frac{1}{2n} (Y^{T} Y+\sum_{j=1}^{p}\beta_{j}^{2}-2  X_{j}^TY \beta_{j})+\sum_{j=1}^{p}\lambda\left|\beta_{j}\right|
+\end{aligned}
+$$
+We can solve the optimization problem for each summation component in above expression. Let us choose j-th component:
+$$
+\beta_{j}^{2}-2  X_{j}^TY \beta_{j}+\lambda|\beta_j|
+$$
+
+Suppose $\beta_j>0$, we take the derivative and get:
+$$
+\begin{equation}
+\frac{1}{n} \hat{\beta}_{j}-\frac{1}{n} X_{j}^TY+\lambda=0 \Rightarrow \hat{\beta}_{j}= X_{j}^TY-n\lambda > 0
+\end{equation}
+$$
+Suppose $\beta_j<0$, we take the derivative and get:
+
+$$
+\frac{1}{n} \hat{\beta}_{j}-\frac{1}{n} X_{j}^TY-\lambda=0 \Rightarrow \hat{\beta}_{j}= n\lambda-X_{j}^TY < 0
+$$
+If $|X_j^TY| \leq n\lambda$, then $X_{j}^TY-n\lambda < 0$ must hold, which is contradict to the case when $\beta_j > 0$.
+
+Similarly, if $|X_j^TY| \leq n\lambda$, then $n\lambda- X_j^TY > 0$ must hold, which is contradict to the case when $\beta_j < 0$.
+
+Based on these 2 contradiction, the only case we can have is that $\hat{\beta_j}=0$. Hence, we proved that when $|X_j^TY| \leq n\lambda$, $\hat{\beta_{LASSO_{j}}}$ must be 0.
+

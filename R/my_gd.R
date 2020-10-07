@@ -10,6 +10,7 @@
 #' @return beta Fitted coefficients.
 #' @examples
 #' my_gd(Sepal.Length~.,iris)
+#' @import stats
 #' @export
 
 my_gd <- function(form,d,eta=0.05,iters=100000,contrasts=NULL){
