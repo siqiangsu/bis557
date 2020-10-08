@@ -139,11 +139,11 @@ $$
 Suppose $\beta_j<0$, we take the derivative and get:
 
 $$
-\frac{1}{n} \hat{\beta}_{j}-\frac{1}{n} X_{j}^TY-\lambda=0 \Rightarrow \hat{\beta}_{j}= n\lambda-X_{j}^TY < 0
+\frac{1}{n} \hat{\beta}_{j}-\frac{1}{n} X_{j}^TY-\lambda=0 \Rightarrow \hat{\beta}_{j}= n\lambda+X_{j}^TY < 0
 $$
 If $|X_j^TY| \leq n\lambda$, then $X_{j}^TY-n\lambda < 0$ must hold, which is contradict to the case when $\beta_j > 0$.
 
-Similarly, if $|X_j^TY| \leq n\lambda$, then $n\lambda- X_j^TY > 0$ must hold, which is contradict to the case when $\beta_j < 0$.
+If $|X_j^TY| \leq n\lambda$, we have $-n\lambda \leq X_j^TY \leq n\lambda$,then $n\lambda+ X_j^TY \geq 0$ must hold, which is contradict to the case when $\beta_j < 0$.
 
 Based on these 2 contradiction, the only case we can have is that $\hat{\beta_j}=0$. Hence, we proved that when $|X_j^TY| \leq n\lambda$, $\hat{\beta_{LASSO_{j}}}$ must be 0.
 
