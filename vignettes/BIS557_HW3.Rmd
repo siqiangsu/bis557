@@ -1,6 +1,6 @@
 ---
 title: "BIS557_HW3"
-output: rmarkdown::html_vignette
+output: pdf_document
 vignette: >
   %\VignetteIndexEntry{BIS557_HW3}
   %\VignetteEngine{knitr::rmarkdown}
@@ -18,7 +18,8 @@ knitr::opts_chunk$set(
 library(bis557)
 ```
 
-(1)CASL 5.8 Exercise number 2
+(1)CASL 5.8 Exercise number 2:
+
 We know the logistic variation of Hessian matrix is $X^TDX$ where D is the diagonal matrix with elements $p_i(1-p_i)$.
 $X^TDX$ can be ill-conditioned if the eigenvalues of D is very small. In this case, the inverse of Hessian will be very large. Based on the theory, we can generate matrix X and probability $p_i$ to make $X^TX$ well-conditioned but $X^TDX$ ill-conditioned.
 ```{r}
