@@ -9,7 +9,6 @@ vignette: >
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
-  collapse = TRUE,
   comment = "#>"
 )
 ```
@@ -34,6 +33,8 @@ solve(t(X)%*%D%*%X)
 We can see that the $X^TX$ is well-conditioned since its entries have reasonable values while logistic variation is ill-conditioned because the entries are very large. This will lead to bad convergence of Newton-Rhapson algorithm.
 
 (2) Here we implement first-order GLM maximum likelihood method. We generate Poisson distributed data and compare our fitted coefficients to the golden standard `glm()` function.
+
+I created a function `first_order_glm()` to implement first-order GLM maximum likelihood problem. This function can give the user option to use constant step size or adaptive step size.
 ```{r}
 #Simulate Poisson distributed data
 n <- 5000
@@ -62,7 +63,7 @@ cbind(beta,beta_hat1)
 ```
 We can see that our fitted coefficients is quite close to the true $\beta$, and we only need 50 iterations to converge. If we use constant step size, we need more iterations to converge.
 
-(3) Here we extend binary logistic regression into K-classes multinomial logistic regression. We use second-order method to update coefficients to ensure fast convergence. We will measure our model's performance by computing its misclassification rate.
+(3) Here we extend binary logistic regression into K-classes multinomial logistic regression. We use second-order method to update coefficients to ensure fast convergence. The function here is `multi_logistic()`. Just like the binary logistic regression function, I extended it to K-classes by looping over each class and evaluate the probability by softmax calculation. We will measure our model's performance by computing its misclassification rate.
 ```{r}
 #Use randomized iris data to test our code
 ind <- sample(150,replace = F)
