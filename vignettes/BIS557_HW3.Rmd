@@ -1,0 +1,90 @@
+---
+title: "BIS557_HW3"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{BIS557_HW3}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(bis557)
+```
+
+(1)CASL 5.8 Exercise number 2
+We know the logistic variation of Hessian matrix is $X^TDX$ where D is the diagonal matrix with elements $p_i(1-p_i)$.
+$X^TDX$ can be ill-conditioned if the eigenvalues of D is very small. In this case, the inverse of Hessian will be very large. Based on the theory, we can generate matrix X and probability $p_i$ to make $X^TX$ well-conditioned but $X^TDX$ ill-conditioned.
+```{r}
+X <- matrix(rnorm(16,mean=0,sd=1),ncol = 4, nrow = 4)
+solve(t(X)%*%X)
+
+#Set ture pi vector
+pi <- c(0.001,10e-5,10e-8,10e-12)
+D <- diag(pi*(1-pi))
+solve(t(X)%*%D%*%X)
+```
+We can see that the $X^TX$ is well-conditioned since its entries have reasonable values while logistic variation is ill-conditioned because the entries are very large. This will lead to bad convergence of Newton-Rhapson algorithm.
+
+(2) Here we implement first-order GLM maximum likelihood method. We generate Poisson distributed data and compare our fitted coefficients to the golden standard `glm()` function.
+```{r}
+#Simulate Poisson distributed data
+n <- 5000
+p <- 3
+beta <- c(-1, 0.2, 0.1)
+X <- cbind(1, matrix(rnorm(n * (p- 1)), ncol = p - 1))
+eta <- X %*% beta
+lambda <- exp(eta)
+y <- rpois(n, lambda = lambda)
+
+
+#constant step size
+beta_hat <- bis557::first_order_glm(X, y,mu_fun = function(eta) exp(eta), size = 0.00001,
+                                    adapt = FALSE,maxit = 1000)
+beta_glm <- coef(glm(y ~ X[,-1], family = "poisson"))
+cbind(beta, beta_hat, as.numeric(beta_glm))
+```
+We can see that our results is quite similar to the `glm()`with the step size 0.00001 and maximum iteration 1000.
+
+Next, we implement adaptive gradient descent by setting the variable `adapt=TRUE` Which will implement momentum method. The momentum update is the weighted average of previous update and gradient, and the weight is controlled by the parameter $\gamma$. Comparing to the constant size, this can help our algorithm converge faster since it can average out the vertical oscillation but maintain the horizontal oscillation. Empirically speaking, $\gamma=0.9$ is a good choice.
+```{r}
+#Momentum gradient descent
+beta_hat1 <- bis557::first_order_glm(X, y,mu_fun = function(eta) exp(eta), size = 0.001,gamma=0.9,
+                                    adapt = TRUE,maxit = 50)
+cbind(beta,beta_hat1)
+```
+We can see that our fitted coefficients is quite close to the true $\beta$, and we only need 50 iterations to converge. If we use constant step size, we need more iterations to converge.
+
+(3) Here we extend binary logistic regression into K-classes multinomial logistic regression. We use second-order method to update coefficients to ensure fast convergence. We will measure our model's performance by computing its misclassification rate.
+```{r}
+#Use randomized iris data to test our code
+ind <- sample(150,replace = F)
+iris_new <- iris[ind,]
+X <- as.matrix(iris_new[,-5])
+y <- iris_new[,5]
+
+fit <- bis557::multi_logistic(X,y,maxit=20)
+```
+
+Then we check our function by inspecting the fitted probabilities:
+```{r}
+#We check the fitted class probabilities for each class
+head(fit$fitted.p,10)
+```
+We will assign the responses to the class with largest probability. For example, the 1st observation has largest probability in class 1, which is Virginica. Hence, we classify it into Virginica.
+
+We check the fitted classes:
+```{r}
+fit$fitted.y
+```
+We compute the misclassification rate:
+```{r}
+fit$misclassification
+```
+We can see that our model is quite good to make accurate classification for 3 classes in `iris` data.
