@@ -1,6 +1,6 @@
 ---
 title: "homework-4"
-output: rmarkdown::html_vignette
+output: pdf_document
 vignette: >
   %\VignetteIndexEntry{homework-4}
   %\VignetteEngine{knitr::rmarkdown}
@@ -12,6 +12,7 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+
 ```
 
 ```{r setup}
@@ -39,6 +40,11 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
+
+# Y: response vector
+# X: data matrix
+# lam: a scalar controlling the penalty
+# tol: a threshold to check colinearity
 def ridge_qr(Y,X,lam,tol):
 
  q,r = np.linalg.qr(X)
