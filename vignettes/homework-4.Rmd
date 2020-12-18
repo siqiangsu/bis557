@@ -1,8 +1,8 @@
 ---
 title: "homework-4"
-output: pdf_document
+output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{homework-4}
+  %\VignetteIndexEntry{homework-2}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
